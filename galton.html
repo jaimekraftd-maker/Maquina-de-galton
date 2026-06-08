@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Máquina de Galton — Probabilidad y Estadística</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141418;
+    --surface2: #1c1c22;
+    --amber: #f5a623;
+    --amber-dim: #a06b10;
+    --teal: #00d4aa;
+    --teal-dim: #006652;
+    --cream: #f0e8d5;
+    --muted: #6b6672;
+    --border: #2a2830;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    padding: 4rem 2rem;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 30% 40%, rgba(245,166,35,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 75% 60%, rgba(0,212,170,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    max-width: 1100px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--cream);
+    margin-bottom: 0.3rem;
+  }
+
+  .hero-text h1 em {
+    font-style: italic;
+    color: var(--amber);
+  }
+
+  .hero-text .subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--teal);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+    display: block;
+  }
+
+  .hero-text p {
+    color: #a09898;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+  }
+
+  .scroll-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .scroll-hint::after {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--muted);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* STATIC GALTON ILLUSTRATION */
+  .hero-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #static-board {
+    filter: drop-shadow(0 0 30px rgba(245,166,35,0.15));
+  }
+
+  /* SECTIONS */
+  section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--teal);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--teal);
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 400;
+    margin-bottom: 2rem;
+    line-height: 1.2;
+  }
+
+  h2 strong { color: var(--amber); font-weight: 700; }
+
+  .prose {
+    color: #b8afa6;
+    font-size: 1.08rem;
+    line-height: 1.9;
+  }
+
+  .prose p { margin-bottom: 1.4rem; }
+
+  /* DIVIDER */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* HOW IT WORKS - STEPS */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2rem 1.5rem;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+
+  .step-card:hover { border-color: var(--amber-dim); }
+
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--border);
+    line-height: 1;
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    user-select: none;
+  }
+
+  .step-card h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  .step-card p {
+    color: #8a8390;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  /* MATH SECTION */
+  .math-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  .math-section section { padding: 5rem 2rem; }
+
+  .formula-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    padding: 2rem;
+    margin: 2rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--cream);
+    border-radius: 0 2px 2px 0;
+    overflow-x: auto;
+  }
+
+  .formula-block .comment {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-top: 0.5rem;
+    display: block;
+  }
+
+  .formula-block .highlight { color: var(--amber); }
+  .formula-block .highlight2 { color: var(--teal); }
+
+  .math-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .math-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1.8rem;
+    border-radius: 2px;
+  }
+
+  .math-card h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--teal);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .math-card .formula {
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    color: var(--cream);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .math-card p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  /* INTERACTIVE SIMULATION */
+  #simulation-section {
+    padding: 5rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  #sim-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-top: 3rem;
+  }
+
+  .sim-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .control-group label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--teal);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .control-group input[type="range"] {
+    accent-color: var(--amber);
+    width: 140px;
+  }
+
+  .control-group .val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--cream);
+  }
+
+  .sim-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--amber);
+    background: transparent;
+    color: var(--amber);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+    margin-top: 1rem;
+  }
+
+  .sim-btn:hover { background: var(--amber); color: var(--bg); }
+  .sim-btn.secondary { border-color: var(--muted); color: var(--muted); }
+  .sim-btn.secondary:hover { background: var(--muted); color: var(--bg); }
+
+  #sim-canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+
+  .sim-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    border-radius: 2px;
+    text-align: center;
+  }
+
+  .stat .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--amber);
+  }
+
+  /* APRENDIZAJES */
+  .learnings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .learning-card {
+    border: 1px solid var(--border);
+    padding: 2rem;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+  }
+
+  .learning-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .learning-card:hover { transform: translateY(-2px); }
+  .learning-card:hover::before { transform: scaleX(1); }
+
+  .learning-icon {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .learning-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    color: var(--cream);
+  }
+
+  .learning-card p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  footer span { color: var(--amber); }
+
+  /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .hero-visual { order: -1; }
+    .math-grid { grid-template-columns: 1fr; }
+    .learnings-grid { grid-template-columns: 1fr; }
+    .sim-stats { grid-template-columns: repeat(2, 1fr); }
+    #static-board { width: 240px; height: auto; }
+  }
+
+  /* QUOTES */
+  blockquote {
+    border-left: 2px solid var(--amber);
+    margin: 2.5rem 0;
+    padding: 1rem 2rem;
+    font-style: italic;
+    color: #8a8390;
+    font-size: 1.05rem;
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 0.6rem;
+    font-style: normal;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <span class="subtitle">Probabilidad · Estadística · Distribución Normal</span>
+      <h1>La Máquina<br>de <em>Galton</em></h1>
+      <p>Un aparato elegante que transforma el caos de miles de bolas en la curva más importante de las matemáticas. Una lección sobre por qué el azar tiene forma.</p>
+      <div class="scroll-hint">Desplázate para explorar</div>
+    </div>
+    <div class="hero-visual">
+      <svg id="static-board" width="280" height="380" viewBox="0 0 280 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Board background -->
+        <rect x="10" y="10" width="260" height="360" rx="4" fill="#141418" stroke="#2a2830" stroke-width="1.5"/>
+        <!-- Title area line -->
+        <line x1="10" y1="50" x2="270" y2="50" stroke="#2a2830" stroke-width="1"/>
+        <text x="140" y="35" text-anchor="middle" font-family="DM Mono" font-size="10" fill="#6b6672" letter-spacing="3">GALTON BOARD</text>
+
+        <!-- Pegs - 5 rows -->
+        <!-- Row 1: 1 peg -->
+        <circle cx="140" cy="75" r="4" fill="#f5a623"/>
+
+        <!-- Row 2: 2 pegs -->
+        <circle cx="120" cy="105" r="4" fill="#f5a623"/>
+        <circle cx="160" cy="105" r="4" fill="#f5a623"/>
+
+        <!-- Row 3: 3 pegs -->
+        <circle cx="100" cy="135" r="4" fill="#f5a623"/>
+        <circle cx="140" cy="135" r="4" fill="#f5a623"/>
+        <circle cx="180" cy="135" r="4" fill="#f5a623"/>
+
+        <!-- Row 4: 4 pegs -->
+        <circle cx="80" cy="165" r="4" fill="#f5a623"/>
+        <circle cx="120" cy="165" r="4" fill="#f5a623"/>
+        <circle cx="160" cy="165" r="4" fill="#f5a623"/>
+        <circle cx="200" cy="165" r="4" fill="#f5a623"/>
+
+        <!-- Row 5: 5 pegs -->
+        <circle cx="60" cy="195" r="4" fill="#f5a623"/>
+        <circle cx="100" cy="195" r="4" fill="#f5a623"/>
+        <circle cx="140" cy="195" r="4" fill="#f5a623"/>
+        <circle cx="180" cy="195" r="4" fill="#f5a623"/>
+        <circle cx="220" cy="195" r="4" fill="#f5a623"/>
+
+        <!-- Bins (6 bins for 5 rows) -->
+        <line x1="40" y1="220" x2="40" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <line x1="80" y1="220" x2="80" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <line x1="120" y1="220" x2="120" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <line x1="160" y1="220" x2="160" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <line x1="200" y1="220" x2="200" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <line x1="240" y1="220" x2="240" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+        <!-- Bottom -->
+        <line x1="40" y1="350" x2="240" y2="350" stroke="#2a2830" stroke-width="1.5"/>
+
+        <!-- Balls in bins (normal distribution shape) -->
+        <!-- Bin 0 (1 ball) -->
+        <circle cx="60" cy="346" r="5" fill="#a06b10" opacity="0.8"/>
+
+        <!-- Bin 1 (4 balls) -->
+        <circle cx="100" cy="346" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="100" cy="335" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="100" cy="324" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="100" cy="313" r="5" fill="#f5a623" opacity="0.9"/>
+
+        <!-- Bin 2 (8 balls) -->
+        <circle cx="140" cy="346" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="335" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="324" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="313" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="302" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="291" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="280" r="5" fill="#00d4aa" opacity="0.9"/>
+        <circle cx="140" cy="269" r="5" fill="#00d4aa" opacity="0.9"/>
+
+        <!-- Bin 3 (4 balls) -->
+        <circle cx="180" cy="346" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="180" cy="335" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="180" cy="324" r="5" fill="#f5a623" opacity="0.9"/>
+        <circle cx="180" cy="313" r="5" fill="#f5a623" opacity="0.9"/>
+
+        <!-- Bin 4 (1 ball) -->
+        <circle cx="220" cy="346" r="5" fill="#a06b10" opacity="0.8"/>
+
+        <!-- Falling ball animation -->
+        <circle r="5" fill="#ffffff" opacity="0.9">
+          <animateMotion dur="2s" repeatCount="indefinite" calcMode="linear">
+            <mpath>
+              <path id="fallPath" d="M140,58 L140,75 L120,105 L140,135 L120,165 L140,195 L140,230"/>
+            </mpath>
+          </animateMotion>
+        </circle>
+
+        <!-- Normal curve overlay -->
+        <path d="M40,350 Q60,350 80,340 Q100,295 120,265 Q130,252 140,250 Q150,252 160,265 Q180,295 200,340 Q220,350 240,350"
+          stroke="#00d4aa" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.5"/>
+
+        <!-- Glow on top peg -->
+        <circle cx="140" cy="75" r="7" fill="none" stroke="#f5a623" stroke-width="1" opacity="0.4">
+          <animate attributeName="r" values="7;10;7" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ¿QUÉ ES? ═══════════════ -->
+<div class="divider"></div>
+<section>
+  <div class="section-label">Introducción</div>
+  <h2>¿Qué es la máquina<br>de <strong>Galton</strong>?</h2>
+  <div class="prose">
+    <p>La <em>Galton Board</em> —también llamada <em>tablero de clavos</em> o <em>quincunx</em>— fue inventada en 1889 por el estadístico británico <strong>Sir Francis Galton</strong> para demostrar visualmente la distribución normal, también conocida como campana de Gauss.</p>
+    <p>El aparato consiste en un tablero vertical con filas de clavos (o pivotes) colocados en forma triangular. Una bola cae desde la parte superior y, al chocar con cada clavo, puede desviarse a la izquierda o a la derecha con igual probabilidad. Al final, la bola cae en una de las urnas de la parte inferior.</p>
+    <p>Lo asombroso: aunque cada bola sigue un camino completamente aleatorio, al lanzar miles de bolas, el montón que se forma en las urnas dibuja perfectamente la curva de campana de Gauss.</p>
+  </div>
+
+  <blockquote>
+    "Sólo quienes han estudiado la frecuencia de los errores pueden apreciar el asombroso orden que reina en medio del caos aparente."
+    <cite>— Sir Francis Galton, 1889</cite>
+  </blockquote>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <span class="step-num">01</span>
+      <h3>La bola cae</h3>
+      <p>Cada bola empieza desde el centro y choca con el primer clavo de la primera fila.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-num">02</span>
+      <h3>Decisión binaria</h3>
+      <p>En cada clavo, la bola cae a la izquierda o derecha con probabilidad p = ½ en cada caso.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-num">03</span>
+      <h3>N decisiones</h3>
+      <p>Con N filas de clavos, cada bola toma N decisiones independientes entre sí.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-num">04</span>
+      <h3>Emerge la campana</h3>
+      <p>El resultado acumulado de miles de bolas forma la distribución normal de forma espontánea.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MATEMÁTICAS ═══════════════ -->
+<div class="math-section">
+<section>
+  <div class="section-label">Fundamento Matemático</div>
+  <h2>Lo que ocurre<br><strong>por dentro</strong></h2>
+  <div class="prose">
+    <p>Cada bola toma exactamente <em>N</em> decisiones binarias (izquierda/derecha). La posición final en la urna depende de cuántas veces fue a la derecha. Esto es exactamente lo que describe la <strong>distribución binomial</strong>.</p>
+  </div>
+
+  <div class="formula-block">
+    <span class="highlight">P(X = k) = C(n,k) · p<sup>k</sup> · (1-p)<sup>n-k</sup></span>
+    <span class="comment">// Probabilidad de caer en la urna k con n filas y prob. p de ir a la derecha</span>
+    <br><br>
+    <span class="highlight2">C(n,k) = n! / (k! · (n-k)!)</span>
+    <span class="comment">// Número de caminos posibles que llevan a la urna k — coeficiente binomial</span>
+  </div>
+
+  <div class="prose">
+    <p>Con <em>n = 5 filas</em> y <em>p = 0.5</em>, la probabilidad de caer en cada urna sigue el triángulo de Pascal:</p>
+  </div>
+
+  <div class="formula-block">
+    <span class="highlight">Triángulo de Pascal (fila n=5):</span><br>
+    1 — 5 — 10 — 10 — 5 — 1
+    <span class="comment">// Total de caminos: 2⁵ = 32</span><br><br>
+    <span class="highlight2">Probabilidades:</span><br>
+    1/32 — 5/32 — 10/32 — 10/32 — 5/32 — 1/32
+    <span class="comment">// ≈ 0.03 — 0.16 — 0.31 — 0.31 — 0.16 — 0.03</span>
+  </div>
+
+  <div class="math-grid">
+    <div class="math-card">
+      <h4>Media (μ)</h4>
+      <span class="formula">μ = n · p</span>
+      <p>La bola cae en el centro en promedio. Con n=5 y p=0.5, μ = 2.5 → urna central.</p>
+    </div>
+    <div class="math-card">
+      <h4>Varianza (σ²)</h4>
+      <span class="formula">σ² = n · p · (1−p)</span>
+      <p>Mide cuánto se dispersan las bolas. Con n=5, p=0.5: σ² = 1.25 → σ ≈ 1.12 urnas.</p>
+    </div>
+    <div class="math-card">
+      <h4>Teorema Central del Límite</h4>
+      <span class="formula">Binomial → Normal</span>
+      <p>Al aumentar n → ∞, la binomial converge a la distribución normal. ¡Esto es exactamente lo que vemos en la máquina!</p>
+    </div>
+    <div class="math-card">
+      <h4>Curva de Gauss</h4>
+      <span class="formula">f(x) = (1/σ√2π)·e^(−½((x−μ)/σ)²)</span>
+      <p>La distribución normal resultante. La campana perfecta que aparece de forma espontánea.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ═══════════════ SIMULACIÓN ═══════════════ -->
+<div id="simulation-section">
+  <div class="section-label">Simulación Interactiva</div>
+  <h2>Pruébalo <strong>tú mismo</strong></h2>
+  <div class="prose">
+    <p>Ajusta los parámetros y lanza bolas para ver cómo emerge la distribución normal. Observa cómo más bolas y más filas producen una campana más perfecta.</p>
+  </div>
+
+  <div id="sim-wrapper">
+    <div class="sim-controls">
+      <div class="control-group">
+        <label>Filas de clavos (n)</label>
+        <input type="range" id="ctrl-rows" min="3" max="12" value="8" step="1">
+        <span class="val" id="val-rows">8</span>
+      </div>
+      <div class="control-group">
+        <label>Velocidad de caída</label>
+        <input type="range" id="ctrl-speed" min="1" max="10" value="5" step="1">
+        <span class="val" id="val-speed">5</span>
+      </div>
+      <div class="control-group">
+        <label>Prob. derecha (p)</label>
+        <input type="range" id="ctrl-prob" min="0.1" max="0.9" value="0.5" step="0.05">
+        <span class="val" id="val-prob">0.50</span>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:0.8rem; flex-wrap:wrap; align-items:flex-end;">
+        <button class="sim-btn" id="btn-drop10">Lanzar ×10</button>
+        <button class="sim-btn" id="btn-drop100">Lanzar ×100</button>
+        <button class="sim-btn secondary" id="btn-reset">Reiniciar</button>
+      </div>
+    </div>
+
+    <canvas id="sim-canvas" width="700" height="450"></canvas>
+
+    <div class="sim-stats">
+      <div class="stat">
+        <span class="stat-label">Bolas lanzadas</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Media (μ)</span>
+        <span class="stat-value" id="stat-mean">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Desv. estándar (σ)</span>
+        <span class="stat-value" id="stat-std">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Urna más llena</span>
+        <span class="stat-value" id="stat-mode">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APRENDIZAJES ═══════════════ -->
+<div class="divider"></div>
+<section>
+  <div class="section-label">Conclusiones</div>
+  <h2>Qué hemos aprendido<br><strong>matemáticamente</strong></h2>
+  <div class="prose">
+    <p>La máquina de Galton no es sólo un juguete fascinante: es una demostración viva de los conceptos más importantes de la estadística y la probabilidad.</p>
+  </div>
+
+  <div class="learnings-grid">
+    <div class="learning-card">
+      <span class="learning-icon">🎲</span>
+      <h3>Distribución Binomial</h3>
+      <p>Cada bola es un experimento de Bernoulli repetido n veces. La posición final sigue B(n, p), y la fórmula de combinatoria nos dice exactamente cuántas trayectorias llevan a cada urna.</p>
+    </div>
+    <div class="learning-card">
+      <span class="learning-icon">🔺</span>
+      <h3>Triángulo de Pascal</h3>
+      <p>Los coeficientes binomiales C(n,k) no son otra cosa que el triángulo de Pascal. Cada fila n de la máquina corresponde a una fila del triángulo y da los pesos de la distribución.</p>
+    </div>
+    <div class="learning-card">
+      <span class="learning-icon">📊</span>
+      <h3>Teorema Central del Límite</h3>
+      <p>El resultado más importante de la estadística: la suma de muchas variables aleatorias independientes tiende a una distribución normal, sin importar cómo sea cada variable individual.</p>
+    </div>
+    <div class="learning-card">
+      <span class="learning-icon">🔔</span>
+      <h3>Distribución Normal</h3>
+      <p>La campana de Gauss emerge de forma natural. Aprendemos a interpretar μ (centro) y σ (anchura), y entendemos por qué el 68% de los valores cae entre μ±σ.</p>
+    </div>
+    <div class="learning-card">
+      <span class="learning-icon">📉</span>
+      <h3>Varianza y Dispersión</h3>
+      <p>Con más filas, la distribución se hace más ancha (mayor σ). Con p ≠ 0.5, la curva se desplaza. Podemos predecir con exactitud cuánto se dispersarán las bolas.</p>
+    </div>
+    <div class="learning-card">
+      <span class="learning-icon">🌐</span>
+      <h3>Ley de los Grandes Números</h3>
+      <p>Con pocas bolas el resultado parece caótico, pero con miles, la distribución converge hacia los valores teóricos. El azar obedece a la estadística a largo plazo.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Máquina de Galton · Probabilidad & Estadística · 1889–presente<br>
+  <span>Cada bola es aleatoria. El conjunto es predecible. Eso es la estadística.</span></p>
+</footer>
+
+<script>
+// ═══ SIMULATION ENGINE ═══
+const canvas = document.getElementById('sim-canvas');
+const ctx = canvas.getContext('2d');
+
+let rows = 8;
+let prob = 0.5;
+let speed = 5;
+let bins = [];
+let totalBalls = 0;
+let animBalls = [];
+let animFrame;
+
+const COLORS = {
+  bg: '#141418',
+  surface: '#0d0d0f',
+  peg: '#f5a623',
+  pegGlow: 'rgba(245,166,35,0.2)',
+  ballActive: '#ffffff',
+  binFill: '#00d4aa',
+  binFillAlt: '#f5a623',
+  normal: 'rgba(0,212,170,0.6)',
+  border: '#2a2830',
+  text: '#6b6672',
+  amber: '#f5a623',
+};
+
+function initBins() {
+  bins = new Array(rows + 1).fill(0);
+  totalBalls = 0;
+  animBalls = [];
+  updateStats();
+}
+
+function getLayout() {
+  const W = canvas.width;
+  const H = canvas.height;
+  const pegStartY = 60;
+  const pegEndY = H - 160;
+  const pegSpacingY = (pegEndY - pegStartY) / rows;
+  const pegSpacingX = Math.min(50, (W - 80) / (rows + 1));
+  const boardWidth = pegSpacingX * (rows + 1);
+  const boardLeft = (W - boardWidth) / 2;
+  const binTop = H - 150;
+  const binHeight = 120;
+  const binWidth = boardWidth / (rows + 1);
+
+  return { W, H, pegStartY, pegSpacingY, pegSpacingX, boardLeft, binTop, binHeight, binWidth, boardWidth };
+}
+
+function drawBoard() {
+  const { W, H, pegStartY, pegSpacingY, pegSpacingX, boardLeft, binTop, binHeight, binWidth, boardWidth } = getLayout();
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw bins
+  const maxBin = Math.max(...bins, 1);
+  for (let i = 0; i <= rows; i++) {
+    const bx = boardLeft + i * binWidth;
+    const fillH = (bins[i] / maxBin) * (binHeight - 10);
+    const byBottom = binTop + binHeight;
+    const byTop = byBottom - fillH;
+
+    // Bin background
+    ctx.fillStyle = '#0a0a0c';
+    ctx.fillRect(bx + 1, binTop, binWidth - 2, binHeight);
+
+    // Bin fill
+    if (bins[i] > 0) {
+      const gradient = ctx.createLinearGradient(0, byTop, 0, byBottom);
+      gradient.addColorStop(0, i === Math.floor(rows/2) ? 'rgba(0,212,170,0.9)' : 'rgba(245,166,35,0.7)');
+      gradient.addColorStop(1, i === Math.floor(rows/2) ? 'rgba(0,100,82,0.6)' : 'rgba(120,80,10,0.5)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(bx + 2, byTop, binWidth - 4, fillH);
+    }
+
+    // Bin walls
+    ctx.strokeStyle = COLORS.border;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx, binTop);
+    ctx.lineTo(bx, binTop + binHeight);
+    ctx.stroke();
+  }
+  // Right wall + bottom
+  ctx.beginPath();
+  ctx.moveTo(boardLeft + (rows+1)*binWidth, binTop);
+  ctx.lineTo(boardLeft + (rows+1)*binWidth, binTop + binHeight);
+  ctx.lineTo(boardLeft, binTop + binHeight);
+  ctx.stroke();
+
+  // Normal curve overlay
+  if (totalBalls > 20) {
+    const mu = rows * prob;
+    const sigma = Math.sqrt(rows * prob * (1 - prob));
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(0,212,170,0.5)';
+    ctx.lineWidth = 2;
+    const maxY = (totalBalls / (rows + 1)) * (binHeight / maxBin) * (rows + 1) / (sigma * Math.sqrt(2 * Math.PI));
+
+    for (let i = 0; i <= rows; i++) {
+      const x = boardLeft + (i + 0.5) * binWidth;
+      const norm = Math.exp(-0.5 * ((i - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
+      const h = norm * totalBalls * binWidth;
+      const scaledH = Math.min(h / maxBin * (binHeight - 10), binHeight - 10);
+      const y = binTop + binHeight - scaledH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Draw pegs
+  for (let row = 0; row < rows; row++) {
+    const numPegs = row + 1;
+    const rowY = pegStartY + row * pegSpacingY;
+    const rowWidth = row * pegSpacingX;
+    const rowLeft = boardLeft + (boardWidth - rowWidth) / 2;
+
+    for (let col = 0; col <= row; col++) {
+      const px = rowLeft + col * pegSpacingX;
+      const py = rowY;
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.pegGlow;
+      ctx.fill();
+
+      // Peg
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.peg;
+      ctx.fill();
+    }
+  }
+
+  // Draw animated balls
+  for (const ball of animBalls) {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${ball.alpha})`;
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.font = '10px DM Mono';
+  ctx.fillStyle = COLORS.text;
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= rows; i++) {
+    const bx = boardLeft + (i + 0.5) * binWidth;
+    ctx.fillText(bins[i] > 0 ? bins[i] : '', bx, binTop + binHeight + 16);
+  }
+
+  // Top label
+  ctx.fillStyle = '#2a2830';
+  ctx.font = '9px DM Mono';
+  ctx.fillText('↓ ENTRADA', W / 2, 18);
+}
+
+class AnimBall {
+  constructor(rows, prob, layout) {
+    this.rows = rows;
+    this.prob = prob;
+    this.layout = layout;
+    this.row = -1;
+    this.col = 0;
+    this.x = layout.boardLeft + layout.boardWidth / 2;
+    this.y = 35;
+    this.alpha = 1;
+    this.done = false;
+    this.finalBin = 0;
+    this.path = this._calcPath();
+    this.pathIdx = 0;
+    this.speed = speed;
+  }
+
+  _calcPath() {
+    const { boardLeft, boardWidth, pegStartY, pegSpacingY, pegSpacingX, binTop, binHeight } = this.layout;
+    const pts = [];
+    // Start
+    pts.push({ x: boardLeft + boardWidth / 2, y: 35 });
+
+    let col = 0;
+    let rights = 0;
+    for (let row = 0; row < this.rows; row++) {
+      const rowY = pegStartY + row * pegSpacingY;
+      const rowWidth = row * pegSpacingX;
+      const rowLeft = boardLeft + (boardWidth - rowWidth) / 2;
+      const px = rowLeft + col * pegSpacingX;
+      pts.push({ x: px, y: rowY });
+
+      // Decide
+      const goRight = Math.random() < this.prob;
+      if (goRight) { col++; rights++; }
+    }
+    this.finalBin = rights;
+
+    // Land in bin
+    const binWidth = boardWidth / (this.rows + 1);
+    const bx = boardLeft + (rights + 0.5) * binWidth;
+    pts.push({ x: bx, y: binTop + binHeight - 8 });
+
+    return pts;
+  }
+
+  update() {
+    if (this.pathIdx >= this.path.length - 1) {
+      this.done = true;
+      return;
+    }
+    const target = this.path[this.pathIdx + 1];
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const step = (this.speed * 2);
+
+    if (dist < step) {
+      this.x = target.x;
+      this.y = target.y;
+      this.pathIdx++;
+    } else {
+      this.x += (dx / dist) * step;
+      this.y += (dy / dist) * step;
+    }
+  }
+}
+
+function dropBalls(count) {
+  const layout = getLayout();
+  for (let i = 0; i < count; i++) {
+    const ball = new AnimBall(rows, prob, layout);
+    // Instant compute for all but a few
+    if (count > 10 && i < count - 10) {
+      bins[ball.finalBin]++;
+      totalBalls++;
+    } else {
+      animBalls.push(ball);
+    }
+  }
+  updateStats();
+  if (!animFrame) animate();
+}
+
+function animate() {
+  let allDone = true;
+  for (const ball of animBalls) {
+    if (!ball.done) {
+      ball.update();
+      allDone = false;
+    } else if (!ball.counted) {
+      ball.counted = true;
+      bins[ball.finalBin]++;
+      totalBalls++;
+      updateStats();
+    }
+  }
+  animBalls = animBalls.filter(b => !b.done || !b.counted);
+
+  drawBoard();
+
+  if (animBalls.length > 0 || !allDone) {
+    animFrame = requestAnimationFrame(animate);
+  } else {
+    animFrame = null;
+    drawBoard();
+  }
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = totalBalls;
+  if (totalBalls === 0) {
+    document.getElementById('stat-mean').textContent = '—';
+    document.getElementById('stat-std').textContent = '—';
+    document.getElementById('stat-mode').textContent = '—';
+    return;
+  }
+  let sum = 0, sum2 = 0;
+  let maxIdx = 0;
+  for (let i = 0; i < bins.length; i++) {
+    sum += i * bins[i];
+    sum2 += i * i * bins[i];
+    if (bins[i] > bins[maxIdx]) maxIdx = i;
+  }
+  const mean = sum / totalBalls;
+  const variance = sum2 / totalBalls - mean * mean;
+  document.getElementById('stat-mean').textContent = mean.toFixed(2);
+  document.getElementById('stat-std').textContent = Math.sqrt(variance).toFixed(2);
+  document.getElementById('stat-mode').textContent = `Urna ${maxIdx}`;
+}
+
+// Controls
+document.getElementById('ctrl-rows').addEventListener('input', e => {
+  rows = +e.target.value;
+  document.getElementById('val-rows').textContent = rows;
+  initBins();
+  drawBoard();
+});
+
+document.getElementById('ctrl-speed').addEventListener('input', e => {
+  speed = +e.target.value;
+  document.getElementById('val-speed').textContent = speed;
+});
+
+document.getElementById('ctrl-prob').addEventListener('input', e => {
+  prob = +e.target.value;
+  document.getElementById('val-prob').textContent = prob.toFixed(2);
+});
+
+document.getElementById('btn-drop10').addEventListener('click', () => dropBalls(10));
+document.getElementById('btn-drop100').addEventListener('click', () => dropBalls(100));
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  initBins();
+  drawBoard();
+});
+
+// Responsive canvas
+function resizeCanvas() {
+  const wrapper = document.getElementById('sim-wrapper');
+  const w = Math.min(700, wrapper.clientWidth - 40);
+  canvas.style.width = w + 'px';
+  canvas.style.height = (w * 450/700) + 'px';
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+initBins();
+drawBoard();
+</script>
+</body>
+</html>
