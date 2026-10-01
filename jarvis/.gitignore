@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+# Datos personales y modelos descargados (no se suben)
+data/memoria.db
+data/capturas/
+data/capturas_hud/
+data/voces/
+data/memoria_prueba.db
+config_prueba.yaml
