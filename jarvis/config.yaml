@@ -1,0 +1,147 @@
+# ============================================================
+#  Configuración de JARVIS
+#  Todo lo que quieras ajustar sin tocar código vive aquí.
+# ============================================================
+
+usuario:
+  nombre: Jaime
+
+# ------------------------------------------------------------
+# Cerebro (LLM)
+# ------------------------------------------------------------
+llm:
+  # local   -> todo lo responde Ollama
+  # hibrido -> lo difícil (o lo que empiece por "piensa bien") va a Claude
+  cerebro: local
+  url: http://localhost:11434
+  # Modelo con soporte de herramientas. Opciones probadas:
+  #   qwen2.5:3b  (recomendado: mejor en catalán y con tools)      llama3.2:3b
+  modelo: qwen2.5:3b
+  # auto | nativo | prompt  (ver explicación en core/llm.py, clase Cerebro)
+  modo_herramientas: auto
+  # Reconoce órdenes claras ("abre spotify", "pausa", "qué hora es") con reglas
+  # y ejecuta la herramienta sin esperar al LLM. Más fiable y rápido.
+  atajos: true
+  # Para atajos simples que salen bien, contesta con una frase de plantilla
+  # sin llamar al LLM (latencia ~0). false = siempre redacta el LLM.
+  respuestas_rapidas: true
+  temperatura: 0.5
+  num_ctx: 4096            # contexto; más = más lento en CPU
+  keep_alive: 30m          # cuánto tiempo deja Ollama el modelo cargado en RAM
+  max_rondas_herramientas: 4
+  timeout_s: 120
+
+# Solo se usa con cerebro: hibrido (necesita la variable ANTHROPIC_API_KEY)
+claude:
+  modelo: claude-opus-5-5
+  # Cuánto piensa Claude: low | medium | high | xhigh | max
+  # (más = mejor respuesta pero más espera y más coste)
+  esfuerzo: medium
+  max_tokens: 4000             # incluye el "pensamiento"; la respuesta hablada es corta
+  prefijos_pensar: ["piensa bien", "pensa be", "pensa bé", "think hard", "think carefully"]
+
+# ------------------------------------------------------------
+# Memoria
+# ------------------------------------------------------------
+memoria:
+  ruta_db: data/memoria.db
+  turnos_historial: 6          # turnos (usuario+jarvis) que se le pasan al modelo
+  max_historial_guardado: 200  # mensajes que se conservan en disco
+  # Con pocos recuerdos se inyectan todos; por encima de este número
+  # se eligen los más relevantes con embeddings.
+  umbral_embeddings: 15
+  top_k: 6
+  modelo_embeddings: nomic-embed-text
+
+# ------------------------------------------------------------
+# Voz de salida (Piper) – una voz por idioma
+# ------------------------------------------------------------
+tts:
+  activado: true
+  carpeta_voces: data/voces
+  voces:
+    es: es_ES-davefx-medium
+    ca: ca_ES-upc_pau-x_low
+    en: en_GB-alan-medium
+  velocidad: 1.0               # >1 más lento, <1 más rápido (length_scale de Piper)
+  hilos_cpu: 2                 # hilos para Piper; pocos para no robarle CPU a Ollama
+
+# ------------------------------------------------------------
+# Voz de entrada (faster-whisper)
+# ------------------------------------------------------------
+stt:
+  modelo: small                # tiny | base | small (más preciso, más lento)
+  dispositivo: cpu
+  compute_type: int8
+  idiomas_permitidos: [es, ca, en]
+  beam_size: 1
+  hilos_cpu: null              # null = la mitad de los núcleos
+  # Nombres que Whisper debe escribir bien (sesgo suave, no obliga)
+  palabras_clave: "Jarvis, Spotify, Discord, Steam, YouTube, Chrome, WhatsApp"
+
+audio:
+  dispositivo_entrada: null    # null = el predeterminado de Windows; o un índice/nombre
+  dispositivo_salida: null
+  # VAD (detección de voz) para saber cuándo has terminado de hablar
+  vad_umbral: 0.5
+  silencio_fin_ms: 700         # silencio necesario para dar la frase por terminada
+  max_grabacion_s: 15
+  espera_inicio_s: 5           # tras el pitido, cuánto espera a que empieces a hablar
+
+# ------------------------------------------------------------
+# Palabra de activación (openWakeWord)
+# ------------------------------------------------------------
+wakeword:
+  modelo: hey_jarvis
+  umbral: 0.5
+  seguimiento_s: 6             # tras responder, segundos en los que puedes seguir hablando sin "Hey Jarvis"
+
+# ------------------------------------------------------------
+# Herramientas
+# ------------------------------------------------------------
+herramientas:
+  carpeta_capturas: data/capturas
+  # Acciones que exigen confirmación explícita (por voz o teclado)
+  confirmar: [olvidar, energia_pc]
+
+# Lista blanca de programas. Jarvis SOLO puede abrir lo que esté aquí.
+# Cada entrada admite:
+#   rutas:  lista de ejecutables candidatos (se usa el primero que exista)
+#   args:   argumentos fijos
+#   appid:  id de app de Windows (Get-StartApps) para apps de la Store
+#   uri:    protocolo (p. ej. "spotify:")
+#   alias:  otros nombres con los que te puedes referir a ella
+apps:
+  spotify:
+    rutas: ["%APPDATA%/Spotify/Spotify.exe"]
+    uri: "spotify:"
+  chrome:
+    rutas:
+      - "%LOCALAPPDATA%/Google/Chrome/Application/chrome.exe"
+      - "C:/Program Files/Google/Chrome/Application/chrome.exe"
+    alias: [google chrome, navegador, navegador web, browser]
+  discord:
+    rutas: ["%LOCALAPPDATA%/Discord/Update.exe"]
+    args: ["--processStart", "Discord.exe"]
+  steam:
+    rutas: ["C:/Program Files (x86)/Steam/steam.exe", "C:/Program Files/Steam/steam.exe"]
+    uri: "steam://open/main"
+  vscode:
+    rutas:
+      - "%LOCALAPPDATA%/Programs/Microsoft VS Code/Code.exe"
+      - "C:/Program Files/Microsoft VS Code/Code.exe"
+    alias: [vs code, visual studio code, code, editor]
+  whatsapp:
+    appid: "5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App"
+  edge:
+    rutas: ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"]
+    alias: [microsoft edge]
+  bloc de notas:
+    rutas: ["C:/Windows/System32/notepad.exe"]
+    alias: [notepad, bloc de notes, notas]
+  calculadora:
+    rutas: ["C:/Windows/System32/calc.exe"]
+    alias: [calculator, calculadora de windows]
+  explorador:
+    rutas: ["C:/Windows/explorer.exe"]
+    alias: [explorador de archivos, file explorer, explorador de fitxers]

@@ -1,0 +1,28 @@
+# JARVIS – dependencias (Python 3.11, Windows)
+# Versiones con las que se ha probado. Instalar con:
+#   python -m pip install -r requirements.txt
+
+# --- Fase 1-2: cerebro, herramientas y memoria ---
+requests==2.34.2          # API local de Ollama
+PyYAML==6.0.3             # config.yaml
+psutil==7.2.2             # info_sistema (CPU, RAM, batería)
+pillow==12.3.0            # captura_pantalla
+numpy==2.4.6              # audio y embeddings
+
+# --- Fase 3: voz de salida ---
+piper-tts==1.8.0          # texto a voz local
+sounddevice==0.5.6        # reproducir y grabar audio
+
+# --- Fase 4: voz de entrada ---
+faster-whisper==1.2.1     # Whisper con CTranslate2 (incluye el VAD Silero)
+ctranslate2==4.8.2
+onnxruntime==1.30.0       # lo usan Piper, Silero y openWakeWord
+
+# --- Fase 5: palabra de activación ---
+openwakeword==0.6.0
+
+# --- Fase 6 (opcional): modo híbrido con Claude ---
+anthropic==1.11.0
+
+# --- Fase 7 (opcional): HUD ---
+PySide6-Essentials==6.11.2
