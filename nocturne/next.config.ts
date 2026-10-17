@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // The floating dev badge covers the chat composer on phones.
   devIndicators: false,
+  // The Agent SDK spawns the Claude Code binary; load it from node_modules at runtime.
+  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk"],
   // `npm run phone` serves the dev server on the local network; allow phones on
   // private (RFC 1918) addresses and .local hostnames to load dev assets.
   allowedDevOrigins: process.env.NOCTURNE_PHONE_DEV

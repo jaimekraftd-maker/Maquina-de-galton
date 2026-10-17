@@ -1,6 +1,7 @@
 import "server-only";
 import { config } from "@/lib/config";
 import { AnthropicProvider } from "./anthropic";
+import { ClaudeCodeProvider } from "./claude-code";
 import { DemoProvider } from "./demo";
 import type { ChatProvider } from "./types";
 
@@ -10,6 +11,7 @@ import type { ChatProvider } from "./types";
  */
 const PROVIDERS: Record<string, () => ChatProvider> = {
   anthropic: () => new AnthropicProvider(config.ai.model),
+  "claude-code": () => new ClaudeCodeProvider(config.ai.model),
   demo: () => new DemoProvider(),
 };
 

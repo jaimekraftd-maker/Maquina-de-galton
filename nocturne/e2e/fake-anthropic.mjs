@@ -17,9 +17,13 @@ http
         return;
       }
       const body = JSON.parse(raw);
-      const system = body.system?.[0]?.text ?? "";
-      const name = /^You are (.+?), a fictional character/m.exec(system)?.[1] ?? "Unknown";
-      const last = body.messages.at(-1)?.content ?? "";
+      // System and message content may be plain strings or arrays of text blocks.
+      const text = (v) => (typeof v === "string" ? v : Array.isArray(v) ? v.map((b) => b?.text ?? "").join("\n") : "");
+      const system = text(body.system);
+      const name = /You are (.+?), a fictional character/m.exec(system)?.[1] ?? "Unknown";
+      let last = text(body.messages.at(-1)?.content);
+      // The Claude Code provider sends history as a transcript; quote only the newest line.
+      last = /The user now says:\n\n([\s\S]*?)\n\nReply in character/.exec(last)?.[1] ?? last;
       const slow = /slow/i.test(last);
       counter += 1;
       const words = `[fake reply ${counter}] ${name} hears you say "${last}". ${slow ? "This answer takes a very long time to finish and keeps going on and on ".repeat(8) : "The end."}`.split(/(?<= )/);

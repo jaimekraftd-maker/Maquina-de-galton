@@ -135,6 +135,30 @@ What the integration does (`lib/ai/anthropic.ts`):
 - **Stop and interruption**: Stop (or closing the tab) aborts the SDK stream through an `AbortSignal`, and the partial reply is saved and marked as interrupted.
 - **Abuse protection**: there is a per-user rate limit (`AI_RATE_LIMIT_PER_MINUTE`), and only one generation can run per conversation at a time.
 
+### Use your Claude subscription instead of an API key (personal use)
+
+The `claude-code` provider (`lib/ai/claude-code.ts`) uses the **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`). The SDK runs Claude Code behind the scenes, so replies count against your Claude plan's usage limits instead of being billed per token. You don't need an API key.
+
+1. Install Claude Code once and log in with your Claude account:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   claude            # follow the login prompt, then type /exit
+   ```
+2. In `.env.local`:
+   ```bash
+   AI_PROVIDER=claude-code
+   # AI_MODEL=claude-sonnet-5-5   # optional; any model your plan includes
+   ```
+3. Restart `npm run dev`.
+
+How this provider works:
+
+- All of Claude Code's tools (files, shell, web) are turned off and each reply is a single turn, so it behaves as a plain chat model. Replies stream as usual, and Stop works.
+- If `ANTHROPIC_API_KEY` is set, it is ignored for this provider, so the subscription login is always used.
+- Each reply starts a short-lived Claude Code process, which adds about a second of latency.
+
+**This is for your own use on your own computer only.** Anthropic doesn't allow apps to offer claude.ai login to other people unless Anthropic has approved it. If you deploy Nocturne for others, use the `anthropic` provider with an API key.
+
 **Adding another provider:** implement `ChatProvider` (`lib/ai/types.ts`) in a new file and register it in `lib/ai/index.ts`. Then select it with `AI_PROVIDER=<id>`. The UI, the chat route and storage don't change.
 
 ## Set up Supabase (accounts + Postgres)
@@ -164,7 +188,7 @@ Avatar uploads go to a public `avatars` bucket, limited to 2 MB and raster image
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | for AI replies | – | Anthropic key, read server-side by the SDK |
-| `AI_PROVIDER` | no | `anthropic` | `anthropic`, or `demo` (development only) |
+| `AI_PROVIDER` | no | `anthropic` | `anthropic` (API key), `claude-code` (your Claude Code login, personal use), or `demo` (development only) |
 | `AI_MODEL` | no | `claude-opus-5-5` | Model id |
 | `AI_EFFORT` | no | `medium` | `low`/`medium`/`high`/`xhigh`/`max`/`off` |
 | `AI_MAX_OUTPUT_TOKENS` | no | `16000` | Per-reply cap (includes internal reasoning) |

@@ -18,7 +18,7 @@ export class AnthropicProvider implements ChatProvider {
 
   configurationProblem(): string | null {
     if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-      return "ANTHROPIC_API_KEY is not set on the server.";
+      return "ANTHROPIC_API_KEY is not set on the server. To use your Claude subscription instead, set AI_PROVIDER=claude-code and log in with `claude`.";
     }
     return null;
   }
