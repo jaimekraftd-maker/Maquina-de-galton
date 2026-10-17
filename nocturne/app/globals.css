@@ -159,6 +159,23 @@
   animation: blink-dot 1s infinite;
 }
 
+/* iOS Safari zooms into inputs with text smaller than 16px; keep it at 16px on touch devices. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Installed app (home screen): no rubber-band scrolling of the whole shell. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

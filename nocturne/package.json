@@ -14,7 +14,9 @@
     "gen:portraits": "node scripts/generate-portraits.mjs",
     "gen:seed": "node scripts/gen-seed-sql.ts",
     "test:rls": "bash scripts/test-rls.sh",
-    "test:all": "npm run typecheck && npm run lint && npm run test && npm run test:rls && npm run test:e2e"
+    "test:all": "npm run typecheck && npm run lint && npm run test && npm run test:rls && npm run test:e2e",
+    "gen:icons": "node scripts/generate-icons.mjs",
+    "phone": "node scripts/phone.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

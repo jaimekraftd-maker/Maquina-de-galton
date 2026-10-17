@@ -16,13 +16,28 @@ function ActionButton({ label, onClick, children }: { label: string; onClick: ()
     <button
       type="button"
       onClick={onClick}
-      className="grid h-7 w-7 place-items-center rounded-lg text-subtle transition-colors hover:bg-white/[0.07] hover:text-fg"
+      className="grid h-7 w-7 place-items-center rounded-lg text-subtle [@media(pointer:coarse)]:h-10 [@media(pointer:coarse)]:w-10 transition-colors hover:bg-white/[0.07] hover:text-fg"
       aria-label={label}
       title={label}
     >
       {children}
     </button>
   );
+}
+
+/** Clipboard API needs a secure context (https); fall back for http on a local network. */
+async function copyText(text: string) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  const el = document.createElement("textarea");
+  el.value = text;
+  el.setAttribute("readonly", "");
+  el.style.position = "fixed";
+  el.style.opacity = "0";
+  document.body.appendChild(el);
+  el.select();
+  const ok = document.execCommand("copy");
+  el.remove();
+  if (!ok) throw new Error("copy failed");
 }
 
 export function MessageItem({
@@ -51,7 +66,7 @@ export function MessageItem({
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      await copyText(message.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {

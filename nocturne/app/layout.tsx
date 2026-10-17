@@ -13,7 +13,10 @@ const heading = Sora({ subsets: ["latin"], variable: "--font-heading", display: 
 export const metadata: Metadata = {
   title: { default: "Nocturne — chat with characters", template: "%s · Nocturne" },
   description: "Discover, create and chat with original AI characters.",
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/icon.svg", apple: "/icons/apple-touch-icon.png" },
+  // Home-screen app on iOS: full screen, dark translucent status bar.
+  appleWebApp: { capable: true, title: "Nocturne", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -21,6 +24,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Shrink the layout (not just the visual viewport) when the on-screen keyboard
+  // opens, so the chat composer stays visible above it.
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

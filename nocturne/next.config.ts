@@ -9,6 +9,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // The floating dev badge covers the chat composer on phones.
+  devIndicators: false,
+  // `npm run phone` serves the dev server on the local network; allow phones on
+  // private (RFC 1918) addresses and .local hostnames to load dev assets.
+  allowedDevOrigins: process.env.NOCTURNE_PHONE_DEV
+    ? ["192.168.*.*", "10.*.*.*", "172.*.*.*", "*.local", ...(process.env.NOCTURNE_DEV_ORIGINS ?? "").split(",").filter(Boolean)]
+    : [],
   experimental: {
     serverActions: { bodySizeLimit: "3mb" },
   },

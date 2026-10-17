@@ -25,6 +25,7 @@ Without credentials the app still runs in a clearly labelled **local development
   - Characters can be public or private.
 - **Library**: conversations (pinned first), favorites, and your own characters.
 - **Auth** (Supabase): sign up, sign in, sign out, email confirmation callback, session refresh in `proxy.ts`, protected pages and guest browsing.
+- **Mobile / installable app**: web app manifest, home-screen icons, full-screen standalone mode, safe areas, keyboard-aware chat layout, touch-sized controls, `npm run phone` for testing on your network.
 - **UX**:
   - Skeleton loaders, toasts, empty states, confirmation dialogs, error boundaries and keyboard-accessible menus and dialogs.
   - Supports reduced motion.
@@ -91,6 +92,27 @@ In local mode:
 - Data is stored in `.data/nocturne.json`, and uploads go to `.data/uploads/`. Delete the folder to reset.
 - A banner explains these limitations. Local mode is **refused in production builds** unless you set `NOCTURNE_ALLOW_LOCAL_MODE=true`.
 - Without an API key, the chat says the AI provider isn't configured. To try the UI anyway, set `AI_PROVIDER=demo`. That gives clearly labelled, scripted placeholder replies, and it is disabled in production.
+
+## Use it on your phone
+
+The interface is built for phones: a drawer menu, a chat composer that stays above the keyboard, safe areas for notched screens, touch-sized buttons, and no iOS zoom on inputs. It's also an installable web app with its own home-screen icon that opens full screen, with no browser bars.
+
+**Option A — same Wi-Fi (quickest, nothing to set up):**
+
+```bash
+npm run phone            # dev server on your network; prints the address to open
+npm run phone -- --prod  # production build: faster, recommended on the phone
+```
+
+1. Connect your phone to the same Wi-Fi network as the computer.
+2. Open the `http://192.168.x.x:3000` address the command prints.
+3. Add it to your home screen:
+   - **iPhone**: Safari → Share → *Add to Home Screen*.
+   - **Android**: Chrome → ⋮ → *Add to Home screen*.
+
+In local mode there's no sign-in, so anyone on that network who opens the address uses the same local user and your AI credits. Only do this on a network you trust. If the page doesn't load, allow Node.js through your computer's firewall.
+
+**Option B — anywhere (recommended for everyday use):** deploy the app (see **Deployment** below), for example to Vercel with Supabase for accounts. You get an `https://` address that works on mobile data, real sign-in, and the full *Install app* prompt on Android, which browsers only offer on https. Local mode can't be deployed this way: serverless hosts don't keep files, so a hosted version needs Supabase.
 
 ## Configure the AI provider
 
@@ -168,6 +190,8 @@ npm run test:e2e       # Playwright: full app (local mode) + real SDK against a 
 npm run test:all       # all of the above
 npm run gen:portraits  # regenerate the demo character art
 npm run gen:seed       # regenerate supabase/seed.sql from lib/data/seed.ts
+npm run gen:icons      # regenerate the app icons (PNG) from the logo
+npm run phone          # serve on your local network for testing on a phone
 ```
 
 For the end-to-end tests, run `npx playwright install chromium` once, or point `PW_CHROMIUM_PATH` at an existing Chromium.

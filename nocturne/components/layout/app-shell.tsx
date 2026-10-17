@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import { AlertTriangle, Info, X } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useVisualViewportHeight } from "@/hooks/use-visual-viewport";
 import { cn } from "@/lib/utils";
 import { SidebarContent } from "./sidebar";
 import { Topbar } from "./topbar";
@@ -15,11 +16,12 @@ export function AppShell({ data, children }: { data: ShellData; children: React.
   const [sidebar, setSidebar] = useLocalStorage<"open" | "collapsed">("nocturne:sidebar", "open");
   const [banner, setBanner] = useLocalStorage<"show" | "hidden">("nocturne:local-banner", "show");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useVisualViewportHeight();
   const collapsed = sidebar === "collapsed";
   const inChat = pathname.startsWith("/chat/");
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="flex h-[var(--app-height,100dvh)] overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
       <a
         href="#main"
         className="sr-only z-50 rounded-lg bg-accent px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -39,12 +41,12 @@ export function AppShell({ data, children }: { data: ShellData; children: React.
       <RD.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
         <RD.Portal>
           <RD.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" />
-          <RD.Content className="fixed inset-y-0 left-0 z-50 w-[min(20rem,85vw)] border-r border-line bg-surface shadow-card focus:outline-none lg:hidden">
+          <RD.Content className="fixed inset-y-0 left-0 z-50 w-[min(20rem,85vw)] border-r border-line bg-surface pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] shadow-card focus:outline-none lg:hidden">
             <RD.Title className="sr-only">Navigation</RD.Title>
             <RD.Description className="sr-only">Main navigation and recent chats</RD.Description>
             <SidebarContent data={data} onNavigate={() => setDrawerOpen(false)} />
             <RD.Close
-              className="absolute top-4 right-3 grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-fg"
+              className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-3 grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-white/5 hover:text-fg"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" />
@@ -82,7 +84,7 @@ export function AppShell({ data, children }: { data: ShellData; children: React.
           <Topbar data={data} onOpenMenu={() => setDrawerOpen(true)} className={inChat ? "hidden lg:flex" : undefined} />
         </Suspense>
 
-        <main id="main" tabIndex={-1} className={cn("min-h-0 flex-1 focus:outline-none", inChat ? "overflow-hidden" : "overflow-y-auto")}>
+        <main id="main" tabIndex={-1} className={cn("min-h-0 flex-1 focus:outline-none", inChat ? "overflow-hidden" : "overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]")}>
           {children}
         </main>
       </div>

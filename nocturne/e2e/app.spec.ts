@@ -166,3 +166,16 @@ test("mobile layout has no horizontal overflow", async ({ browser }) => {
   await expect(page.getByRole("dialog").getByRole("link", { name: "Discover" })).toBeVisible();
   await context.close();
 });
+
+test("installable on phones: manifest, icons and mobile meta", async ({ page, request }) => {
+  const manifest = await (await request.get("/manifest.webmanifest")).json();
+  expect(manifest).toMatchObject({ display: "standalone", start_url: "/", short_name: "Nocturne" });
+  for (const icon of manifest.icons as { src: string }[]) {
+    expect((await request.get(icon.src)).status(), icon.src).toBe(200);
+  }
+  await page.goto("/");
+  await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/icons/apple-touch-icon.png");
+  expect((await request.get("/icons/apple-touch-icon.png")).status()).toBe(200);
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute("content", /viewport-fit=cover.*interactive-widget=resizes-content/);
+});
