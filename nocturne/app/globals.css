@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------------
+   Nocturne design tokens
+   Colors, radii, spacing and type are exposed as Tailwind theme values
+   (bg-surface, text-muted, rounded-card, …) and as CSS variables.
+   ------------------------------------------------------------------------ */
+@theme {
+  --color-ink: #0a0910;
+  --color-surface: #121019;
+  --color-surface-2: #191623;
+  --color-surface-3: #221e2f;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+  --color-fg: #ece8f5;
+  --color-muted: #9b95ad;
+  --color-subtle: #6d6880;
+  --color-accent: #a585ff;
+  --color-accent-strong: #8b65f7;
+  --color-accent-soft: rgb(165 133 255 / 0.14);
+  --color-rose: #f2a2c8;
+  --color-rose-soft: rgb(242 162 200 / 0.14);
+  --color-success: #6fdcaa;
+  --color-warning: #f5c56b;
+  --color-danger: #ff7a8a;
+  --color-danger-soft: rgb(255 122 138 / 0.12);
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-bubble: 1.25rem;
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px rgb(165 133 255 / 0.35), 0 12px 40px -10px rgb(139 101 247 / 0.45);
+
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --sidebar-width: 16.5rem;
+  --sidebar-collapsed: 4.5rem;
+  --topbar-height: 4rem;
+  --space-page: clamp(1rem, 3vw, 2rem);
+  --measure-chat: 46rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background:
+      radial-gradient(60rem 40rem at 85% -10%, rgb(139 101 247 / 0.12), transparent 60%),
+      radial-gradient(40rem 30rem at -10% 20%, rgb(242 162 200 / 0.06), transparent 60%),
+      var(--color-ink);
+    background-attachment: fixed;
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgb(165 133 255 / 0.35);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Thin, unobtrusive scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility glass {
+  background: rgb(18 16 25 / 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+@utility text-gradient {
+  background: linear-gradient(100deg, #f4efff 10%, #c8b3ff 50%, #f2a2c8 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes blink-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.05), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+.typing-dot {
+  animation: blink-dot 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--color-accent);
+  border-radius: 1px;
+  animation: blink-dot 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
