@@ -43,7 +43,7 @@ export const config = {
       return int("AI_MAX_OUTPUT_TOKENS", 16000, 256, 128000);
     },
     get contextMaxTokens() {
-      return int("AI_CONTEXT_MAX_TOKENS", 24000, 2000, 900000);
+      return int("AI_CONTEXT_MAX_TOKENS", 40000, 2000, 900000);
     },
     get timeoutMs() {
       return int("AI_TIMEOUT_MS", 120000, 5000, 600000);

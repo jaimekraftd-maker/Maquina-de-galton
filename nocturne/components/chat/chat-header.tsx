@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MessageCirclePlus, MoreVertical, Pencil, Pin, PinOff, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, Brain, MessageCirclePlus, MoreVertical, Pencil, Pin, PinOff, Trash2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -18,18 +18,21 @@ export function ChatHeader({
   conversationId,
   title,
   pinned,
+  memory,
   character,
   status,
 }: {
   conversationId: string;
   title: string;
   pinned: boolean;
+  memory: string | null;
   character: { id: string; name: string; avatarUrl: string | null } | null;
   status: "online" | "typing" | "offline" | "unavailable";
 }) {
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [showMemory, setShowMemory] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const [pending, startTransition] = useTransition();
 
@@ -113,6 +116,9 @@ export function ChatHeader({
           >
             {pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />} {pinned ? "Unpin" : "Pin"}
           </DropdownItem>
+          <DropdownItem onSelect={() => setShowMemory(true)}>
+            <Brain className="h-4 w-4" /> What {character?.name.split(" ")[0] ?? "they"} remembers
+          </DropdownItem>
           <DropdownItem
             onSelect={() => {
               setNewTitle(title);
@@ -141,6 +147,24 @@ export function ChatHeader({
           router.push("/library");
         }}
       />
+
+      <Dialog open={showMemory} onOpenChange={setShowMemory}>
+        <DialogContent
+          title={`What ${character?.name ?? "the character"} remembers`}
+          description={
+            memory
+              ? "A summary of the earlier part of this chat. Recent messages are remembered word for word."
+              : "This chat is short enough that every message is remembered word for word. Once it gets long, a summary of the older part is kept here."
+          }
+          className="max-w-lg"
+        >
+          {memory ? (
+            <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 text-sm leading-relaxed whitespace-pre-line text-fg/85">
+              {memory}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={renaming} onOpenChange={setRenaming}>
         <DialogContent title="Rename conversation">

@@ -20,7 +20,7 @@ interface ChatError {
 }
 
 export interface ChatViewProps {
-  conversation: { id: string; title: string; pinned: boolean };
+  conversation: { id: string; title: string; pinned: boolean; memory: string | null };
   character: { id: string; name: string; avatarUrl: string | null } | null;
   initialMessages: Message[];
   providerProblem: string | null;
@@ -237,6 +237,7 @@ export function ChatView({ conversation, character, initialMessages, providerPro
         conversationId={conversation.id}
         title={conversation.title}
         pinned={conversation.pinned}
+        memory={conversation.memory}
         character={character}
         status={!character ? "unavailable" : providerProblem ? "offline" : streaming ? "typing" : "online"}
       />

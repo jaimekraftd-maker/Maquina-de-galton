@@ -7,6 +7,7 @@ import type {
   CharacterInput,
   CharacterQuery,
   Conversation,
+  ConversationMemory,
   ConversationWithCharacter,
   Message,
   MessageMetadata,
@@ -46,6 +47,8 @@ interface ConversationRow {
   pinned: boolean;
   created_at: string;
   last_activity_at: string;
+  memory_summary?: string | null;
+  memory_through_seq?: number | null;
 }
 
 interface MessageRow {
@@ -107,6 +110,10 @@ const toConversation = (r: ConversationRow): Conversation => ({
   pinned: r.pinned,
   createdAt: r.created_at,
   lastActivityAt: r.last_activity_at,
+  memory:
+    r.memory_summary && r.memory_through_seq != null
+      ? { summary: r.memory_summary, throughSeq: Number(r.memory_through_seq) }
+      : null,
 });
 
 const toMessage = (r: MessageRow): Message => ({
@@ -317,6 +324,19 @@ export class SupabaseStore implements DataStore {
     const rows = check(
       await this.sb.from("conversations").update(patch).eq("id", id).eq("user_id", viewerId).select("id"),
       "update conversation",
+    ) as { id: string }[];
+    return rows.length > 0;
+  }
+
+  async setConversationMemory(viewerId: string, id: string, memory: ConversationMemory | null) {
+    const rows = check(
+      await this.sb
+        .from("conversations")
+        .update({ memory_summary: memory?.summary ?? null, memory_through_seq: memory?.throughSeq ?? null })
+        .eq("id", id)
+        .eq("user_id", viewerId)
+        .select("id"),
+      "save conversation memory",
     ) as { id: string }[];
     return rows.length > 0;
   }

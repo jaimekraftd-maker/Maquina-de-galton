@@ -98,6 +98,13 @@ export interface Message {
   createdAt: string;
 }
 
+/** Rolling summary of the part of a chat that no longer fits in the model's context. */
+export interface ConversationMemory {
+  summary: string;
+  /** Every message with seq <= throughSeq is covered by the summary. */
+  throughSeq: number;
+}
+
 export interface Conversation {
   id: string;
   userId: string;
@@ -106,6 +113,8 @@ export interface Conversation {
   pinned: boolean;
   createdAt: string;
   lastActivityAt: string;
+  /** Absent on conversations short enough to need no summary (and on older local data). */
+  memory?: ConversationMemory | null;
 }
 
 export interface ConversationWithCharacter extends Conversation {

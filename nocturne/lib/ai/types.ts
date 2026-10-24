@@ -4,6 +4,8 @@ export interface ChatTurn {
 }
 
 export interface GenerateRequest {
+  /** "chat" (default) is an in-character reply; "summary" is a plain task such as writing the chat memory. */
+  purpose?: "chat" | "summary";
   system: string;
   messages: ChatTurn[];
   signal: AbortSignal;

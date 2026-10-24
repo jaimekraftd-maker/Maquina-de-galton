@@ -85,3 +85,14 @@ describe("LocalStore", () => {
     expect(await store.listFavorites(BOB)).toEqual([]);
   });
 });
+
+describe("LocalStore conversation memory", () => {
+  it("persists memory per conversation and only for its owner", async () => {
+    const store = new LocalStore(file);
+    const conv = await store.createConversation(ALICE, SEED_CHARACTERS[0].id, "long chat");
+    expect(await store.setConversationMemory(BOB, conv.id, { summary: "nope", throughSeq: 1 })).toBe(false);
+    expect(await store.setConversationMemory(ALICE, conv.id, { summary: "Cat is Pixel", throughSeq: 7 })).toBe(true);
+    const reloaded = await new LocalStore(file).getConversation(ALICE, conv.id);
+    expect(reloaded?.memory).toEqual({ summary: "Cat is Pixel", throughSeq: 7 });
+  });
+});

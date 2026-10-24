@@ -24,7 +24,12 @@ export default async function ChatPage({ params }: PageProps<"/chat/[conversatio
   return (
     <ChatView
       key={conversation.id}
-      conversation={{ id: conversation.id, title: conversation.title, pinned: conversation.pinned }}
+      conversation={{
+        id: conversation.id,
+        title: conversation.title,
+        pinned: conversation.pinned,
+        memory: conversation.memory?.summary ?? null,
+      }}
       character={character ? { id: character.id, name: character.name, avatarUrl: character.avatarUrl } : null}
       initialMessages={messages}
       providerProblem={problem ? `${problem} See the README section "Configure the AI provider".` : null}

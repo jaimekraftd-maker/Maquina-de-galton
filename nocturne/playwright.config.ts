@@ -37,6 +37,8 @@ export default defineConfig({
         ANTHROPIC_AUTH_TOKEN: "",
         ANTHROPIC_BASE_URL: `http://127.0.0.1:${FAKE_PORT}`,
         AI_RATE_LIMIT_PER_MINUTE: "100",
+        // Small history budget so the memory test reaches the folding point quickly.
+        AI_CONTEXT_MAX_TOKENS: "2000",
       },
       port: PORT,
       timeout: 120_000,

@@ -23,7 +23,7 @@ export class ClaudeCodeProvider implements ChatProvider {
     return null;
   }
 
-  async generate({ system, messages, signal, onText }: GenerateRequest): Promise<GenerateResult> {
+  async generate({ purpose = "chat", system, messages, signal, onText }: GenerateRequest): Promise<GenerateResult> {
     const { query } = await import("@anthropic-ai/claude-agent-sdk");
 
     const abortController = new AbortController();
@@ -46,7 +46,7 @@ export class ClaudeCodeProvider implements ChatProvider {
     try {
       if (signal.aborted) throw new ProviderError("aborted", "Generation stopped.", false);
       run = query({
-        prompt: transcript(messages),
+        prompt: purpose === "summary" ? (messages.at(-1)?.content ?? "") : transcript(messages),
         options: {
           model: this.model,
           systemPrompt: `${system}\n\n${IGNORE_RUNTIME}`,

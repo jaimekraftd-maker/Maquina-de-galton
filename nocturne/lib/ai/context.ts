@@ -14,12 +14,18 @@ export interface ContextWindow {
 export const CONVERSATION_START = "(The conversation begins.)";
 export const EARLIER_OMITTED = "(Earlier parts of this conversation are not shown.)";
 
+export function memoryNote(summary: string) {
+  return `(Memory of what happened earlier in this conversation. Stay consistent with it, but don't recite it.)\n${summary}`;
+}
+
 /**
  * Selects the most recent messages that fit within `budgetTokens`, always
  * keeping the latest message, and normalizes the result so it starts with a
- * user turn (the greeting is stored as an assistant message).
+ * user turn (the greeting is stored as an assistant message). When the chat
+ * has a memory summary of older messages, it leads the window.
  */
-export function buildContextWindow(history: ChatTurn[], budgetTokens: number): ContextWindow {
+export function buildContextWindow(history: ChatTurn[], budgetTokens: number, memory?: string | null): ContextWindow {
+  if (memory) budgetTokens = Math.max(1000, budgetTokens - estimateTokens(memory));
   const kept: ChatTurn[] = [];
   let used = 0;
   for (let i = history.length - 1; i >= 0; i--) {
@@ -38,8 +44,11 @@ export function buildContextWindow(history: ChatTurn[], budgetTokens: number): C
     else merged.push({ ...turn });
   }
 
+  const lead = memory ? memoryNote(memory) : omitted > 0 ? EARLIER_OMITTED : CONVERSATION_START;
   if (merged[0]?.role === "assistant") {
-    merged.unshift({ role: "user", content: omitted > 0 ? EARLIER_OMITTED : CONVERSATION_START });
+    merged.unshift({ role: "user", content: lead });
+  } else if (memory && merged[0]) {
+    merged[0] = { ...merged[0], content: `${lead}\n\n${merged[0].content}` };
   }
   return { messages: merged, omitted };
 }

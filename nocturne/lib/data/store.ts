@@ -4,6 +4,7 @@ import type {
   CharacterQuery,
   CharacterSummary,
   Conversation,
+  ConversationMemory,
   ConversationWithCharacter,
   Message,
   MessageMetadata,
@@ -41,6 +42,7 @@ export interface DataStore {
     patch: Partial<Pick<Conversation, "title" | "pinned">>,
   ): Promise<boolean>;
   deleteConversation(viewerId: string, id: string): Promise<boolean>;
+  setConversationMemory(viewerId: string, id: string, memory: ConversationMemory | null): Promise<boolean>;
 
   // Messages
   listMessages(viewerId: string, conversationId: string): Promise<Message[]>;

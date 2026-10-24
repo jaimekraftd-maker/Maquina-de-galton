@@ -179,3 +179,24 @@ test("installable on phones: manifest, icons and mobile meta", async ({ page, re
   expect((await request.get("/icons/apple-touch-icon.png")).status()).toBe(200);
   await expect(page.locator('meta[name="viewport"]')).toHaveAttribute("content", /viewport-fit=cover.*interactive-widget=resizes-content/);
 });
+
+test("long chats keep early facts in the character's memory", async ({ page }) => {
+  test.setTimeout(120_000);
+  await startChatWith(page, MIRA);
+  const send = async (text: string) => {
+    await composer(page).fill(text);
+    await composer(page).press("Enter");
+    await expect(page.getByRole("button", { name: "Send message" })).toBeVisible();
+  };
+  await send("Remember this: my cat is called Pixel.");
+  // Enough long messages to push the first one out of the recent-history budget.
+  for (let i = 0; i < 8; i++) await send(`Long story part ${i}. ${"The station hums quietly while storms swirl below. ".repeat(18)}`);
+  await send("What is my cat called?");
+
+  const last = messages(page).getByRole("listitem").last();
+  await expect(last).toContainText("[memory:yes]");
+
+  await page.getByRole("button", { name: "Conversation options" }).click();
+  await page.getByRole("menuitem", { name: /What Mira remembers/ }).click();
+  await expect(page.getByRole("dialog")).toContainText("the user's cat is called Pixel");
+});

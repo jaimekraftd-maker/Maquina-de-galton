@@ -9,6 +9,7 @@ import type {
   CharacterInput,
   CharacterQuery,
   Conversation,
+  ConversationMemory,
   ConversationWithCharacter,
   Message,
   MessageMetadata,
@@ -264,6 +265,15 @@ export class LocalStore implements DataStore {
     if (!conv) return false;
     if (patch.title !== undefined) conv.title = patch.title;
     if (patch.pinned !== undefined) conv.pinned = patch.pinned;
+    await this.persist();
+    return true;
+  }
+
+  async setConversationMemory(viewerId: string, id: string, memory: ConversationMemory | null) {
+    const db = await this.load();
+    const conv = this.ownedConversation(db, viewerId, id);
+    if (!conv) return false;
+    conv.memory = memory;
     await this.persist();
     return true;
   }

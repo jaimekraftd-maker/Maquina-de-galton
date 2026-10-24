@@ -50,6 +50,10 @@ insert into ctx select 'alice_conv', id from public.conversations;
 insert into public.messages (conversation_id, role, content)
   select v, 'user', 'secret dream' from ctx where k = 'alice_conv';
 insert into public.favorites (character_id) values ('00000000-0000-4000-8000-000000000001');
+update public.conversations set memory_summary = 'Alice likes cats', memory_through_seq = 1;
+do $$ begin
+  assert (select memory_summary from public.conversations limit 1) = 'Alice likes cats', 'owner can save conversation memory';
+end $$;
 
 do $$ begin
   assert (select count(*) from public.messages) = 1, 'alice sees her message';
@@ -78,6 +82,8 @@ begin
   assert not found, 'cannot delete another user''s character';
   update public.conversations set title = 'Hacked' where id = alice_conv;
   assert not found, 'cannot update another user''s conversation';
+  update public.conversations set memory_summary = 'Hacked' where id = alice_conv;
+  assert not found, 'cannot overwrite another user''s conversation memory';
   delete from public.messages where conversation_id = alice_conv;
   assert not found, 'cannot delete another user''s messages';
 

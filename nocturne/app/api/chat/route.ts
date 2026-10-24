@@ -3,6 +3,7 @@ import { rejectCrossSite } from "@/lib/http";
 import { config } from "@/lib/config";
 import { getProvider } from "@/lib/ai";
 import { buildContextWindow } from "@/lib/ai/context";
+import { planMemory, summarize } from "@/lib/ai/memory";
 import { buildSystemPrompt } from "@/lib/ai/prompt";
 import { ProviderError } from "@/lib/ai/types";
 import { beginGeneration, endGeneration } from "@/lib/chat/generations";
@@ -127,10 +128,7 @@ export async function POST(request: Request) {
   }
 
   const system = buildSystemPrompt(character, viewer.displayName);
-  const window = buildContextWindow(
-    history.map((m) => ({ role: m.role, content: m.content })),
-    config.ai.contextMaxTokens,
-  );
+  const budget = config.ai.contextMaxTokens;
 
   // If the client disconnects (tab closed, navigation), stop generating.
   request.signal.addEventListener("abort", () => controller.abort());
@@ -152,6 +150,37 @@ export async function POST(request: Request) {
 
       let text = "";
       try {
+        // Long chats: fold the oldest messages into the conversation's memory so the
+        // character keeps remembering them once they no longer fit in the context.
+        let memory = conversation.memory ?? null;
+        const plan = planMemory(history, memory, budget);
+        if (plan.fold.length && plan.throughSeq !== null) {
+          try {
+            const summary = await summarize(provider, {
+              characterName: character.name,
+              userName: viewer.displayName,
+              previous: memory?.summary ?? null,
+              messages: plan.fold,
+              chunkTokens: budget,
+              signal: controller.signal,
+            });
+            if (summary) {
+              memory = { summary, throughSeq: plan.throughSeq };
+              await store.setConversationMemory(viewer.id, conversation.id, memory);
+            }
+          } catch (err) {
+            if (controller.signal.aborted) throw err;
+            // Not fatal: reply with the recent history only.
+            console.error("[chat] memory update failed:", err);
+          }
+        }
+        const recent = memory ? history.filter((m) => m.seq > memory.throughSeq) : history;
+        const window = buildContextWindow(
+          recent.map((m) => ({ role: m.role, content: m.content })),
+          budget,
+          memory?.summary,
+        );
+
         const result = await provider.generate({
           system,
           messages: window.messages,

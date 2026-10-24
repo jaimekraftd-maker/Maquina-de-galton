@@ -24,7 +24,13 @@ export class DemoProvider implements ChatProvider {
       : null;
   }
 
-  async generate({ system, messages, signal, onText }: GenerateRequest): Promise<GenerateResult> {
+  async generate({ purpose, system, messages, signal, onText }: GenerateRequest): Promise<GenerateResult> {
+    if (purpose === "summary") {
+      // Not a real summary: keeps the most recent lines so memory can be exercised without AI.
+      const text = messages.at(-1)?.content ?? "";
+      onText(`[Demo memory] ${text.split("New messages to add:").pop()?.trim().slice(-1500) ?? ""}`);
+      return { model: this.model, stopReason: "end_turn" };
+    }
     const name = /^You are (.+?), a fictional character/m.exec(system)?.[1] ?? "The character";
     const last = messages.at(-1)?.content ?? "";
     const reply =
