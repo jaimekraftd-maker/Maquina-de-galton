@@ -189,12 +189,15 @@ test("long chats keep early facts in the character's memory", async ({ page }) =
     await expect(page.getByRole("button", { name: "Send message" })).toBeVisible();
   };
   await send("Remember this: my cat is called Pixel.");
+  await send("I designed a dress for you: emerald silk with silver embroidery.");
   // Enough long messages to push the first one out of the recent-history budget.
   for (let i = 0; i < 8; i++) await send(`Long story part ${i}. ${"The station hums quietly while storms swirl below. ".repeat(18)}`);
   await send("What is my cat called?");
+  await expect(messages(page).getByRole("listitem").last()).toContainText("[memory:yes]");
 
-  const last = messages(page).getByRole("listitem").last();
-  await expect(last).toContainText("[memory:yes]");
+  // The design is long out of the recent history: it must be quoted back word for word.
+  await send("Do you still remember the dresses I designed?");
+  await expect(messages(page).getByRole("listitem").last()).toContainText("[recall:yes]");
 
   await page.getByRole("button", { name: "Conversation options" }).click();
   await page.getByRole("menuitem", { name: /What Mira remembers/ }).click();

@@ -33,6 +33,7 @@ export function ChatView({ conversation, character, initialMessages, providerPro
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
   const [streamText, setStreamText] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [stopping, setStopping] = useState(false);
   const [error, setError] = useState<ChatError | null>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -158,7 +159,11 @@ export function ChatView({ conversation, character, initialMessages, providerPro
                 return next;
               });
               break;
+            case "status":
+              setStatus(event.text);
+              break;
             case "delta":
+              setStatus(null);
               pendingText.current += event.text;
               frame.current ??= requestAnimationFrame(flush);
               break;
@@ -192,6 +197,7 @@ export function ChatView({ conversation, character, initialMessages, providerPro
         frame.current = null;
         pendingText.current = "";
         setStreamText(null);
+        setStatus(null);
         setStopping(false);
         fetchAbort.current = null;
         busyRef.current = false;
@@ -269,7 +275,9 @@ export function ChatView({ conversation, character, initialMessages, providerPro
                   onEdit={(content) => void run("edit", { messageId: m.id, content })}
                 />
               ))}
-              {streaming ? <StreamingMessage text={streamText} characterName={characterName} avatarUrl={character?.avatarUrl ?? null} /> : null}
+              {streaming ? (
+                <StreamingMessage text={streamText} status={status} characterName={characterName} avatarUrl={character?.avatarUrl ?? null} />
+              ) : null}
             </ol>
 
             {error ? (

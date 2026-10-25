@@ -42,6 +42,21 @@ export async function deleteConversation(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Clears a chat's memory so it is rebuilt from the full history on the next message. */
+export async function resetConversationMemory(id: string): Promise<ActionResult> {
+  const { store, viewer } = await getContext();
+  if (!viewer) return { ok: false, error: "Sign in first." };
+  if (!uuidSchema.safeParse(id).success) return { ok: false, error: "Conversation not found." };
+  try {
+    if (!(await store.setConversationMemory(viewer.id, id, null))) return { ok: false, error: "Conversation not found." };
+  } catch (err) {
+    console.error("[conversations] memory reset failed:", err);
+    return { ok: false, error: "Couldn't reset the memory." };
+  }
+  revalidatePath(`/chat/${id}`);
+  return { ok: true };
+}
+
 export async function updateConversation(
   id: string,
   patch: { pinned?: boolean; title?: string },

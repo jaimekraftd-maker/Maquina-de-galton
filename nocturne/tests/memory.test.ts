@@ -37,9 +37,19 @@ describe("planMemory", () => {
     expect(keptTokens).toBeLessThanOrEqual(budget * 0.6);
   });
 
-  it("always keeps at least the last six messages verbatim", () => {
+  it("always keeps at least the latest exchange verbatim", () => {
     const plan = planMemory(chat(20), null, 300);
-    expect(plan.keep.length).toBeGreaterThanOrEqual(6);
+    expect(plan.keep.length).toBeGreaterThanOrEqual(2);
+    expect(plan.keep.at(-1)!.seq).toBe(20);
+  });
+
+  it("doesn't fold again on the next turn after folding", () => {
+    const history = chat(60);
+    const budget = 5000;
+    const first = planMemory(history, null, budget);
+    const memory = { summary: "s ".repeat(600), throughSeq: first.throughSeq! };
+    const next = planMemory([...history, long(61), long(62)], memory, budget);
+    expect(next.fold).toEqual([]);
   });
 
   it("skips messages already covered by the memory", () => {

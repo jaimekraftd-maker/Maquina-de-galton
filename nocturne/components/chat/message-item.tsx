@@ -174,7 +174,17 @@ export function MessageItem({
   );
 }
 
-export function StreamingMessage({ text, characterName, avatarUrl }: { text: string; characterName: string; avatarUrl: string | null }) {
+export function StreamingMessage({
+  text,
+  status,
+  characterName,
+  avatarUrl,
+}: {
+  text: string;
+  status?: string | null;
+  characterName: string;
+  avatarUrl: string | null;
+}) {
   return (
     <li className="flex gap-3" aria-live="polite" aria-busy="true">
       <Avatar src={avatarUrl} name={characterName} className="mt-0.5 h-9 w-9" />
@@ -185,6 +195,11 @@ export function StreamingMessage({ text, characterName, avatarUrl }: { text: str
             <div className="caret">
               <RichText text={text} className="[&>p:last-child]:inline" />
             </div>
+          ) : status ? (
+            <span className="flex h-6 items-center gap-2 text-sm text-muted" role="status">
+              <span className="typing-dot h-2 w-2 rounded-full bg-accent" />
+              {status}
+            </span>
           ) : (
             <span className="flex h-6 items-center gap-1" aria-label={`${characterName} is typing`}>
               <span className="typing-dot h-2 w-2 rounded-full bg-muted" />

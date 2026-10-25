@@ -14,8 +14,22 @@ export interface ContextWindow {
 export const CONVERSATION_START = "(The conversation begins.)";
 export const EARLIER_OMITTED = "(Earlier parts of this conversation are not shown.)";
 
-export function memoryNote(summary: string) {
-  return `(Memory of what happened earlier in this conversation. Stay consistent with it, but don't recite it.)\n${summary}`;
+/**
+ * The note that leads the context once a chat has a memory: the summary of older
+ * messages plus, when available, earlier messages quoted word for word because they
+ * relate to what the user just said.
+ */
+export function memoryNote(summary: string | null, recalled?: string | null) {
+  const parts = [];
+  if (summary) {
+    parts.push(`(Memory of what happened earlier in this conversation. Stay consistent with it, but don't recite it.)\n${summary}`);
+  }
+  if (recalled) {
+    parts.push(
+      `(Earlier moments from this conversation that relate to the latest message, quoted exactly. Use their details faithfully.)\n${recalled}`,
+    );
+  }
+  return parts.join("\n\n");
 }
 
 /**
@@ -24,8 +38,14 @@ export function memoryNote(summary: string) {
  * user turn (the greeting is stored as an assistant message). When the chat
  * has a memory summary of older messages, it leads the window.
  */
-export function buildContextWindow(history: ChatTurn[], budgetTokens: number, memory?: string | null): ContextWindow {
-  if (memory) budgetTokens = Math.max(1000, budgetTokens - estimateTokens(memory));
+export function buildContextWindow(
+  history: ChatTurn[],
+  budgetTokens: number,
+  memory?: string | null,
+  recalled?: string | null,
+): ContextWindow {
+  const note = memory || recalled ? memoryNote(memory ?? null, recalled) : null;
+  if (note) budgetTokens = Math.max(1000, budgetTokens - estimateTokens(note));
   const kept: ChatTurn[] = [];
   let used = 0;
   for (let i = history.length - 1; i >= 0; i--) {
@@ -44,10 +64,10 @@ export function buildContextWindow(history: ChatTurn[], budgetTokens: number, me
     else merged.push({ ...turn });
   }
 
-  const lead = memory ? memoryNote(memory) : omitted > 0 ? EARLIER_OMITTED : CONVERSATION_START;
+  const lead = note ?? (omitted > 0 ? EARLIER_OMITTED : CONVERSATION_START);
   if (merged[0]?.role === "assistant") {
     merged.unshift({ role: "user", content: lead });
-  } else if (memory && merged[0]) {
+  } else if (note && merged[0]) {
     merged[0] = { ...merged[0], content: `${lead}\n\n${merged[0].content}` };
   }
   return { messages: merged, omitted };

@@ -26,10 +26,10 @@ http
       last = /The user now says:\n\n([\s\S]*?)\n\nReply in character/.exec(last)?.[1] ?? last;
       const slow = /slow/i.test(last);
       const everything = JSON.stringify(body.messages);
-      const isMemoryRequest = system.includes("You keep the memory");
+      const isMemoryRequest = /You keep the (long-term )?memory/.test(system);
       counter += 1;
       const memoryText = `MEMORY: ${/cat is called (\w+)/.exec(everything) ? `the user's cat is called ${/cat is called (\w+)/.exec(everything)[1]}` : "earlier small talk"}.`;
-      const words = isMemoryRequest ? memoryText.split(/(?<= )/) : `[fake reply ${counter}] ${name} hears you say "${last}". ${slow ? "This answer takes a very long time to finish and keeps going on and on ".repeat(8) : "The end."} [memory:${everything.includes("MEMORY:") ? "yes" : "no"}]`.split(/(?<= )/);
+      const words = isMemoryRequest ? memoryText.split(/(?<= )/) : `[fake reply ${counter}] ${name} hears you say "${last}". ${slow ? "This answer takes a very long time to finish and keeps going on and on ".repeat(8) : "The end."} [memory:${everything.includes("MEMORY:") ? "yes" : "no"}] [recall:${everything.includes("quoted exactly") && everything.includes("emerald silk") ? "yes" : "no"}]`.split(/(?<= )/);
 
       res.writeHead(200, { "content-type": "text/event-stream" });
       sse(res, "message_start", {

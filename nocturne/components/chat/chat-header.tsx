@@ -5,7 +5,7 @@ import { ArrowLeft, Brain, MessageCirclePlus, MoreVertical, Pencil, Pin, PinOff,
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { deleteConversation, startConversation, updateConversation } from "@/app/actions/conversations";
+import { deleteConversation, resetConversationMemory, startConversation, updateConversation } from "@/app/actions/conversations";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -159,8 +159,29 @@ export function ChatHeader({
           className="max-w-lg"
         >
           {memory ? (
-            <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 text-sm leading-relaxed whitespace-pre-line text-fg/85">
-              {memory}
+            <div className="space-y-4">
+              <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 text-sm leading-relaxed whitespace-pre-line text-fg/85">
+                {memory}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-subtle">Missing something? Rebuild it from the whole chat on your next message.</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      const res = await resetConversationMemory(conversationId);
+                      if (!res.ok) return void toast.error(res.error);
+                      toast.success("Memory will be rebuilt with your next message");
+                      setShowMemory(false);
+                      router.refresh();
+                    })
+                  }
+                >
+                  Rebuild memory
+                </Button>
+              </div>
             </div>
           ) : null}
         </DialogContent>

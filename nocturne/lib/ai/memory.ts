@@ -3,11 +3,13 @@ import { estimateTokens } from "./context";
 import type { ChatProvider } from "./types";
 
 export const MEMORY_MAX_CHARS = 8000;
+/** Share of the history budget given to earlier messages quoted word for word. */
+export const RECALL_SHARE = 0.15;
 /** After folding, the recent history should use at most this share of the budget, so the
  * summary is only rewritten every so often rather than on every turn. */
 const KEEP_RATIO = 0.6;
-/** Always keep at least this many recent messages verbatim. */
-const MIN_KEEP = 6;
+/** Always keep at least the latest exchange verbatim. */
+const MIN_KEEP = 2;
 
 export interface MemoryPlan {
   /** Messages to fold into the summary now (oldest first); empty when nothing needs folding. */
@@ -29,8 +31,9 @@ export function planMemory(history: Message[], memory: ConversationMemory | null
   const summaryCost = memory ? estimateTokens(memory.summary) : 0;
   if (cost(active) + summaryCost <= budgetTokens) return { fold: [], keep: active, throughSeq: null };
 
-  // Keep the newest messages that fit in KEEP_RATIO of the budget (and at least MIN_KEEP).
-  const target = budgetTokens * KEEP_RATIO;
+  // Keep the newest messages that fit in KEEP_RATIO of the budget (and at least MIN_KEEP),
+  // leaving room for the summary so the next turns don't immediately fold again.
+  const target = Math.max(0, budgetTokens * KEEP_RATIO - summaryCost);
   let cut = active.length;
   let used = 0;
   while (cut > 0) {
@@ -65,15 +68,26 @@ export function chunkMessages(messages: Message[], maxTokens: number): Message[]
 }
 
 export function summaryPrompt(characterName: string, userName: string) {
-  return `You keep the memory for an ongoing roleplay chat between ${userName} (the user) and the fictional character ${characterName}.
+  return `You keep the long-term memory for an ongoing roleplay chat between ${userName} (the user) and the fictional character ${characterName}.
 
-Update the memory so ${characterName} can stay consistent after the older messages are no longer visible. Keep everything that matters later:
-- facts about ${userName}: name, preferences, background, anything they asked to be remembered
-- what has happened in the story so far, in order, and the current situation and location
-- relationships, feelings, promises, plans, open questions and unresolved threads
-- names of people, places and objects that were introduced
+The older messages will no longer be visible, so the memory must keep every detail that could matter later. Use exactly these sections:
 
-Write plain prose and short bullet points, in the third person, under 400 words. Merge the existing memory with the new messages; drop small talk. Output only the updated memory.`;
+## About ${userName}
+Name, appearance, preferences, background, and anything they asked to be remembered.
+
+## Things ${userName} made, designed, gave or described
+Every creation, design, gift or idea (for example outfits, dresses, drawings, names, plans), each with its concrete details: colours, materials, shapes, who it was for and what ${characterName} thought of it. Never shorten or drop an entry here.
+
+## People, places and objects
+Names and one-line descriptions.
+
+## Story so far
+What happened, in order, ending with the current situation and location.
+
+## Relationship and open threads
+Feelings, promises, plans and unresolved questions.
+
+When updating, merge the existing memory with the new messages. Keep every entry from the existing memory unless it is clearly contradicted, and add new details. Skip small talk. Write in the third person, using short bullet points. Output only the memory.`;
 }
 
 /**

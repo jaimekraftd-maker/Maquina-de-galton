@@ -3,7 +3,8 @@ import { rejectCrossSite } from "@/lib/http";
 import { config } from "@/lib/config";
 import { getProvider } from "@/lib/ai";
 import { buildContextWindow } from "@/lib/ai/context";
-import { planMemory, summarize } from "@/lib/ai/memory";
+import { planMemory, RECALL_SHARE, summarize } from "@/lib/ai/memory";
+import { formatRecalled, recall } from "@/lib/ai/recall";
 import { buildSystemPrompt } from "@/lib/ai/prompt";
 import { ProviderError } from "@/lib/ai/types";
 import { beginGeneration, endGeneration } from "@/lib/chat/generations";
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
         let memory = conversation.memory ?? null;
         const plan = planMemory(history, memory, budget);
         if (plan.fold.length && plan.throughSeq !== null) {
+          send({ type: "status", text: `Updating ${character.name}'s memory…` });
           try {
             const summary = await summarize(provider, {
               characterName: character.name,
@@ -175,10 +177,16 @@ export async function POST(request: Request) {
           }
         }
         const recent = memory ? history.filter((m) => m.seq > memory.throughSeq) : history;
+        // Quote the earlier messages that relate to what the user just said, word for word,
+        // so details the summary condensed (descriptions, designs, names) aren't lost.
+        const older = memory ? history.filter((m) => m.seq <= memory.throughSeq) : [];
+        const latest = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
+        const recalled = recall(older, latest, Math.floor(budget * RECALL_SHARE));
         const window = buildContextWindow(
           recent.map((m) => ({ role: m.role, content: m.content })),
           budget,
           memory?.summary,
+          recalled.length ? formatRecalled(recalled, viewer.displayName, character.name) : null,
         );
 
         const result = await provider.generate({
